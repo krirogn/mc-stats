@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     env,
     fs::{self, File},
     io::{BufReader, Read},
@@ -234,14 +234,19 @@ fn main() {
 
     // Convert the secons played in `players` into a readable format and return
     let mut table: Vec<Vec<CellStruct>> = Vec::new();
-    for player in players {
-        let seconds = player.1 % 60;
-        let minutes = (player.1 / 60) % 60;
-        let hours = (player.1 / 60) / 60;
+    let players: BTreeMap<i64, String> = players
+        .iter()
+        .map(|(k, v)| (v.to_owned(), k.to_owned()))
+        .collect();
+    for player in players.iter().rev() {
+        let seconds = player.0 % 60;
+        let minutes = (player.0 / 60) % 60;
+        let hours = ((player.0 / 60) / 60) % 24;
+        let days = ((player.0 / 60) / 60) / 24;
 
         table.push(vec![
-            player.0.cell(),
-            format!("{:0>2}:{:0>2}:{:0>2}", hours, minutes, seconds)
+            player.1.cell(),
+            format!("{:0>2}:{:0>2}:{:0>2}:{:0>2}", days, hours, minutes, seconds)
                 .cell()
                 .justify(cli_table::format::Justify::Right),
         ]);
@@ -251,7 +256,7 @@ fn main() {
         .table()
         .title(vec![
             "Player".cell().bold(true),
-            "Time HH:MM:SS".cell().bold(true),
+            "Time DD:HH:MM:SS".cell().bold(true),
         ])
         .bold(true);
     println!("{}", cli_table.display().expect("Couldn't display table"));
