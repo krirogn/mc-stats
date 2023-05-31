@@ -6,6 +6,7 @@ use std::{
 };
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime, Utc};
+use cli_table::{Cell, CellStruct, Style, Table};
 use flate2::bufread::GzDecoder;
 
 #[derive(Debug, Clone)]
@@ -232,10 +233,26 @@ fn main() {
     }
 
     // Convert the secons played in `players` into a readable format and return
+    let mut table: Vec<Vec<CellStruct>> = Vec::new();
     for player in players {
         let seconds = player.1 % 60;
         let minutes = (player.1 / 60) % 60;
         let hours = (player.1 / 60) / 60;
-        println!("{} {:0>2}:{:0>2}:{:0>2}", player.0, hours, minutes, seconds);
+
+        table.push(vec![
+            player.0.cell(),
+            format!("{:0>2}:{:0>2}:{:0>2}", hours, minutes, seconds)
+                .cell()
+                .justify(cli_table::format::Justify::Right),
+        ]);
     }
+
+    let cli_table = table
+        .table()
+        .title(vec![
+            "Player".cell().bold(true),
+            "Time HH:MM:SS".cell().bold(true),
+        ])
+        .bold(true);
+    println!("{}", cli_table.display().expect("Couldn't display table"));
 }
