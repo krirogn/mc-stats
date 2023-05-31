@@ -43,9 +43,6 @@ fn main() {
     // Go through files and pare player connections
     let mut player_entries: Vec<PlayerLog> = Vec::new();
     for file_name in files {
-        // println!("{}", file_name);
-        // println!("{}", &file_name[..10]);
-
         let mut log_file =
             File::open(format!("{}{}", path, file_name)).expect("Coudln't open log file");
 
@@ -64,8 +61,6 @@ fn main() {
         for line in log {
             // Log in
             if line.contains("logged in with") {
-                // println!("{}", line);
-
                 // Player name
                 let player_name = line
                     .split(": ")
@@ -77,7 +72,6 @@ fn main() {
                     .get(0)
                     .unwrap()
                     .to_owned();
-                // println!("{}", player_name);
 
                 // Time
                 let time: NaiveDateTime;
@@ -120,8 +114,6 @@ fn main() {
                 });
             // Log out
             } else if line.contains("lost connection") {
-                // println!("{}", line);
-
                 let mut player_name = line
                     .split(": ")
                     .collect::<Vec<&str>>()
@@ -144,8 +136,6 @@ fn main() {
                         .get(0)
                         .unwrap();
                 }
-
-                // println!("{}", player_name);
 
                 // Time
                 let time: NaiveDateTime;
@@ -189,20 +179,10 @@ fn main() {
         }
     }
 
-    // dbg!(&player_entries);
-
     // Get players times
     let mut players: HashMap<String, i64> = HashMap::new();
     let mut logins: HashMap<String, PlayerLog> = HashMap::new();
     for entry in player_entries {
-        // let mut logins: HashSet<PlayerLog> = HashSet::new();
-
-        // TODO: Loop and when you find a login add it to the set if not
-        // already there, and if you find a disconect then you find the
-        // difference between the hashset if player exists there, then
-        // remove the player from the hashset and add the difference in
-        // the players hashmap
-
         // Login
         if entry.connect {
             if !logins.contains_key(&entry.player) {
@@ -230,6 +210,21 @@ fn main() {
                 logins.remove_entry(&entry.player);
             }
         }
+    }
+
+    // Handle people that are currently online
+    for login in logins {
+        // Get difference
+        let old_time = login.1.time;
+        let new_time = Utc::now().naive_utc();
+        let elapsed_time = new_time - old_time;
+
+        let duration = players
+            .get(&login.1.player)
+            .expect("Couldn't get player HashMap")
+            .to_owned();
+
+        players.insert(login.0, duration + elapsed_time.num_seconds());
     }
 
     // Convert the secons played in `players` into a readable format and return
